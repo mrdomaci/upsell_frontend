@@ -105,7 +105,7 @@ async function getVariantDetail(recommendation) {
 
 async function getVariantDetailFromEshop(recommendation)
 {
-    const us_link_response = await goToURL(recommendation.url);
+    const us_link_response = await goToURL(insertCacheInUrl(recommendation.url));
     const response = await us_link_response.text();
     const tempContainer = document.createElement('div');
     tempContainer.innerHTML = response;
@@ -211,4 +211,12 @@ async function printResults() {
             }
         });
     }
+}
+
+function insertCacheInUrl(url) {
+    const urlParts = url.split('/');
+    if (urlParts.length > 2) {
+        urlParts.splice(3, 0, 'cache');
+    }
+    return urlParts.join('/');
 }
