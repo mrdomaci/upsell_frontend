@@ -46,7 +46,8 @@ function getCartItems() {
 function getImageCdn() {
     const us_cart_items = document.querySelectorAll('td.cart-p-image a img');
     if (us_cart_items.length > 0) {
-        let us_image_src = us_cart_items[0].getAttribute('data-src');
+        let us_image_src = us_cart_items[0].getAttribute('data-src') || us_cart_items[0].getAttribute('src');
+        if (!us_image_src) return null;
         const us_image_parts = us_image_src.split('/');
         us_image_parts.pop();
         const us_image_cdn = us_image_parts.join('/');
@@ -77,7 +78,7 @@ function setMainDiv() {
     if (us_main_div.length == 0) {
         const us_cart = document.querySelectorAll('.cart-table');
         if (us_cart.length > 0) {
-            us_cart.forEach(async function (el) {
+            us_cart.forEach(function (el) {
                 el.insertAdjacentHTML('afterend', '<hr><div id="upsell-container"></div>');
             });
         }
@@ -90,7 +91,7 @@ function setMainDiv() {
 
 async function cacheResults(result) {
     result.recommendations.forEach(async function (recommendation) {
-        recommendation = await getVariantDetail(recommendation);
+        recommendation = await getVariantDetailFromEshop(recommendation);
         let recommendationJson = JSON.stringify(recommendation);
         if (recommendationJson != null) {
             sessionStorage.setItem('us_' + recommendation.id, recommendationJson.toString());
@@ -99,13 +100,9 @@ async function cacheResults(result) {
     return true;
 }
 
-async function getVariantDetail(recommendation) {
-    return await getVariantDetailFromEshop(recommendation);
-}
-
 async function getVariantDetailFromEshop(recommendation)
 {
-    const us_link_response = await goToURL(insertCacheInUrl(recommendation.url));
+    const us_link_response = await fetchURL(insertCacheInUrl(recommendation.url));
     const response = await us_link_response.text();
     const tempContainer = document.createElement('div');
     tempContainer.innerHTML = response;
@@ -138,12 +135,11 @@ async function getVariantDetailFromEshop(recommendation)
     return recommendation;
 }
 
-async function goToURL(url) {
+async function fetchURL(url) {
     try {
         const response = await fetch(url);
         return response;
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error:', error);
     }
 }
@@ -168,16 +164,16 @@ function checkCachedData(us_product_ids) {
     return us_result;
 }
 
-async function printResults() {
+function printResults() {
     const upsell_container = document.querySelectorAll('#upsell-container');
     if (upsell_container.length > 0) {
         const us_image_cdn = getImageCdn();
         let us_language = getShoptetDataLayer('language');
         let us_call_to_action = shoptet.messages['toCart'];
-        upsell_container.forEach(async function (el) {
+        upsell_container.forEach(function (el) {
             let us_request = sessionStorage.getItem('us_request_' + getCartItemsGUIDS().toString());
             let us_product_ids = us_request.split(',');
-            if (us_product_ids.length > 0 && checkCachedData(us_product_ids) == true) {
+            if (us_product_ids.length > 0 && checkCachedData(us_product_ids)) {
                 let us_header = sessionStorage.getItem('us_header');
                 let us_result = '<h4>'+ us_header +'</h4><table class="cart-table upsell"><tbody id="upsell-recommendations">';
                 us_product_ids.forEach(function (product_id) {
