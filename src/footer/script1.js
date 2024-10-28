@@ -107,7 +107,7 @@ async function getVariantDetailFromEshop(recommendation)
     const tempContainer = document.createElement('div');
     tempContainer.innerHTML = response;
     const availability = tempContainer.querySelector('span.availability-label');
-    recommendation.availability = '-';
+    recommendation.availability = '';
     if (availability) {
         recommendation.availability = availability.textContent.trim();
     }
@@ -123,15 +123,12 @@ async function getVariantDetailFromEshop(recommendation)
     } else {
         return null;
     }
-    recommendation.color = null;
-    if (availability.style.color) {
-        recommendation.color = availability.style.color;
-    }
     const price = tempContainer.querySelector('span.price-final-holder')
     if (price) {
         recommendation.price = price.textContent.trim();
+    } else {
+        return null;
     }
-    if (recommendation.guid)
     return recommendation;
 }
 
@@ -172,7 +169,7 @@ function printResults() {
         let us_call_to_action = shoptet.messages['toCart'];
         upsell_container.forEach(function (el) {
             let us_request = sessionStorage.getItem('us_request_' + getCartItemsGUIDS().toString());
-            let us_product_ids = us_request.split(',');
+            let us_product_ids = us_request ? us_request.split(',') : [];
             if (us_product_ids.length > 0 && checkCachedData(us_product_ids)) {
                 let us_header = sessionStorage.getItem('us_header');
                 let us_result = '<h4>'+ us_header +'</h4><table class="cart-table upsell"><tbody id="upsell-recommendations">';
@@ -184,7 +181,7 @@ function printResults() {
                                 <tr class="removeable" data-micro="cartItem" data-source="easy-upsell" data-micro-identifier="${recommendation.guid}" data-micro-sku="${recommendation.code}" data-testid="productItem_${recommendation.guid}">
                                     <td class="cart-p-image"><a href="${recommendation.url}"><img src="${us_image_cdn}${recommendation.image_url}" data-src="${us_image_cdn}${recommendation.image_url}" alt="${recommendation.name}"></a></td>
                                     <td class="p-name" data-testid="cartProductName"><a href="${recommendation.url}" class="main-link" data-testid="cartWidgetProductName">${recommendation.name}</a></td>
-                                    <td class="p-availability p-cell"><strong class="availability-label" style="color: ${recommendation.color}">${recommendation.availability}</strong></td>
+                                    <td class="p-availability p-cell"><strong class="availability-label">${recommendation.availability}</strong></td>
                                     <td class="p-quantity p-cell">
                                         <form action="/action/Cart/addCartItem/" method="post" class="pr-action csrf-enabled">
                                             <input type="hidden" name="language" value="${us_language}">
