@@ -1,3 +1,4 @@
+let us_cart_items_gids = [];
 if (isCart() == true) {
     getResults();
     setInterval(getResults, 2000);
@@ -65,11 +66,15 @@ function isCart() {
 async function getResults() {
     setMainDiv();
     const us_cart_items = getCartItemsGUIDS();
+    if (arraysAreEqual(us_cart_items, us_cart_items_gids)) {
+        return;
+    }
     const result = await getRecommnededProductsFromServer(us_cart_items);
     if (result != null) {
         await cacheResults(result);
         await cacheRequest(us_cart_items, result);
     }
+    us_cart_items_gids = us_cart_items;
     printResults();
 }
 
@@ -82,10 +87,6 @@ function setMainDiv() {
                 el.insertAdjacentHTML('afterend', '<hr><div id="upsell-container"></div>');
             });
         }
-    } else {
-        us_main_div.forEach(function (el) {
-            el.innerHTML = '';
-        });
     }
 }
 
@@ -212,4 +213,18 @@ function insertCacheInUrl(url) {
         urlParts.splice(3, 0, 'cache');
     }
     return urlParts.join('/');
+}
+
+function arraysAreEqual(array1, array2) {
+    if (array1.length !== array2.length) {
+        return false;
+    }
+
+    for (let i = 0; i < array1.length; i++) {
+        if (array1[i] !== array2[i]) {
+            return false;
+        }
+    }
+    
+    return true;
 }
