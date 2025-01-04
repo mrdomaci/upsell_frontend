@@ -1,8 +1,7 @@
 let us_cart_items_gids = [];
-if (isCart() == true) {
-    getResults();
-    setInterval(getResults, 2000);
-}
+checkCart();
+getResults();
+setInterval(getResults, 2000);
 
 async function getRecommnededProductsFromServer(us_cart_items) {
     if (shouldCallServer(us_cart_items) === false) {
@@ -60,7 +59,17 @@ function isCart() {
     if (getShoptetDataLayer('pageType') == 'cart') {
         return true;
     }
+    if (document.querySelector('[data-testid="tableCart"]')) {
+        return true;
+    }
     return false;
+}
+
+function checkCart() {
+    if (isCart()) {
+        return;
+    }
+    setTimeout(checkCart, 5000);
 }
 
 async function getResults() {
