@@ -60,9 +60,6 @@ function isCart() {
     if (getShoptetDataLayer('pageType') == 'cart') {
         return true;
     }
-    if (document.querySelector('[data-testid="tableCart"]')) {
-        return true;
-    }
     return false;
 }
 
