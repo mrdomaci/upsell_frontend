@@ -1,4 +1,5 @@
 let us_cart_items_gids = [];
+let us_in_progress = false;
 checkCart();
 getResults();
 setInterval(getResults, 2000);
@@ -78,6 +79,10 @@ async function getResults() {
     if (arraysAreEqual(us_cart_items, us_cart_items_gids)) {
         return;
     }
+    if (us_in_progress) {
+        return;
+    }
+    us_in_progress = true;
     const result = await getRecommnededProductsFromServer(us_cart_items);
     if (result != null) {
         await cacheResults(result);
@@ -85,6 +90,7 @@ async function getResults() {
     }
     us_cart_items_gids = us_cart_items;
     printResults();
+    us_in_progress = false;
 }
 
 function setMainDiv() {
