@@ -1,4 +1,5 @@
 let us_cart_items_gids = [];
+let lastRenderedProductIds = [];
 let us_in_progress = false;
 checkCart();
 
@@ -84,12 +85,12 @@ async function getResults() {
         return;
     }
     us_in_progress = true;
+    us_cart_items_gids = us_cart_items;
     const result = await getRecommnededProductsFromServer(us_cart_items);
     if (result != null) {
         await cacheResults(result);
         await cacheRequest(us_cart_items, result);
     }
-    us_cart_items_gids = us_cart_items;
     printResults();
     us_in_progress = false;
 }
@@ -179,47 +180,82 @@ function checkCachedData(us_product_ids) {
 }
 
 function printResults() {
-    const upsell_container = document.querySelectorAll('#upsell-container');
-    if (upsell_container.length > 0) {
-        const us_image_cdn = getImageCdn();
-        let us_language = getShoptetDataLayer('language');
-        let us_call_to_action = shoptet.messages['toCart'];
-        upsell_container.forEach(function (el) {
-            let us_request = sessionStorage.getItem('us_request_' + getCartItemsGUIDS().toString());
-            let us_product_ids = us_request ? us_request.split(',') : [];
-            if (us_product_ids.length > 0 && checkCachedData(us_product_ids)) {
-                let us_header = sessionStorage.getItem('us_header');
-                let us_result = '<h4>'+ us_header +'</h4><table class="cart-table upsell"><tbody id="upsell-recommendations">';
-                us_product_ids.forEach(function (product_id) {
-                    let recommendation = sessionStorage.getItem('us_' + product_id);
-                    if (recommendation != null) {
-                        recommendation = JSON.parse(recommendation);
-                        let us_result_item = `
-                                <tr class="removeable" data-micro="cartItem" data-source="easy-upsell" data-micro-identifier="${recommendation.guid}" data-micro-sku="${recommendation.code}" data-testid="productItem_${recommendation.guid}">
-                                    <td class="cart-p-image"><a href="${recommendation.url}"><img src="${us_image_cdn}${recommendation.image_url}" data-src="${us_image_cdn}${recommendation.image_url}" alt="${recommendation.name}"></a></td>
-                                    <td class="p-name" data-testid="cartProductName"><a href="${recommendation.url}" class="main-link" data-testid="cartWidgetProductName">${recommendation.name}</a></td>
-                                    <td class="p-availability p-cell"><strong class="availability-label">${recommendation.availability}</strong></td>
-                                    <td class="p-quantity p-cell">
-                                        <form action="/action/Cart/addCartItem/" method="post" class="pr-action csrf-enabled">
-                                            <input type="hidden" name="language" value="${us_language}">
-                                            <input type="hidden" name="priceId" value="${recommendation.priceId}">
-                                            <input type="hidden" name="productId" value="${recommendation.id}">
-                                            <input type="hidden" name="amount" value="1" autocomplete="off">
-                                            <button type="submit" class="btn btn-cart add-to-cart-button" data-testid="buttonAddToCart">
-                                                <span>${us_call_to_action}</span>
-                                            </button>
-                                        </form>
-                                    </td>
-                                    <td class="p-total"><strong class="price-final" data-testid="cartItemPrice">${recommendation.price}</strong><span class="unit-value">/ ${recommendation.unit}</span></td>
-                                </tr>`;
-                        us_result += us_result_item;
-                    }
-                });
-                us_result += '</tbody></table>';
+    const upsellContainer = document.querySelector('#upsell-container');
+    if (!upsellContainer) return;
 
-                el.insertAdjacentHTML('beforeend', us_result);
+    const usImageCdn = getImageCdn();
+    let usLanguage = getShoptetDataLayer('language');
+    let usCallToAction = shoptet.messages['toCart'];
+
+    let usRequest = sessionStorage.getItem('us_request_' + getCartItemsGUIDS().toString());
+    let usProductIds = usRequest ? usRequest.split(',') : [];
+
+    if (JSON.stringify(usProductIds) === JSON.stringify(lastRenderedProductIds)) {
+        return;
+    }
+
+    if (usProductIds.length > 0 && checkCachedData(usProductIds)) {
+        let usHeader = sessionStorage.getItem('us_header');
+
+        if (!document.querySelector('#upsell-container h4')) {
+            const headerElement = document.createElement('h4');
+            headerElement.textContent = usHeader;
+            upsellContainer.appendChild(headerElement);
+        }
+
+        let upsellTable = document.querySelector('#upsell-recommendations');
+        if (!upsellTable) {
+            upsellContainer.insertAdjacentHTML(
+                'beforeend',
+                `<table class="cart-table upsell"><tbody id="upsell-recommendations"></tbody></table>`
+            );
+            upsellTable = document.querySelector('#upsell-recommendations');
+        }
+
+        let existingRows = {};
+        document.querySelectorAll('#upsell-recommendations tr[data-micro-identifier]').forEach(row => {
+            existingRows[row.getAttribute('data-micro-identifier')] = row;
+        });
+
+        usProductIds.forEach(function (productId) {
+            let recommendation = sessionStorage.getItem('us_' + productId);
+            if (recommendation) {
+                recommendation = JSON.parse(recommendation);
+
+                if (existingRows[recommendation.guid]) {
+                    let row = existingRows[recommendation.guid];
+                    row.querySelector('.p-name a').textContent = recommendation.name;
+                    row.querySelector('.p-name a').href = recommendation.url;
+                    row.querySelector('.cart-p-image img').src = usImageCdn + recommendation.image_url;
+                    row.querySelector('.cart-p-image img').alt = recommendation.name;
+                    row.querySelector('.p-availability strong').textContent = recommendation.availability;
+                    row.querySelector('.p-total strong').textContent = recommendation.price;
+                    row.querySelector('.p-total .unit-value').textContent = `/ ${recommendation.unit}`;
+                } else {
+                    let usResultItem = `
+                        <tr class="removeable" data-micro="cartItem" data-source="easy-upsell" data-micro-identifier="${recommendation.guid}" data-micro-sku="${recommendation.code}" data-testid="productItem_${recommendation.guid}">
+                            <td class="cart-p-image"><a href="${recommendation.url}"><img src="${usImageCdn}${recommendation.image_url}" alt="${recommendation.name}"></a></td>
+                            <td class="p-name"><a href="${recommendation.url}" class="main-link">${recommendation.name}</a></td>
+                            <td class="p-availability"><strong class="availability-label">${recommendation.availability}</strong></td>
+                            <td class="p-quantity">
+                                <form action="/action/Cart/addCartItem/" method="post" class="pr-action csrf-enabled">
+                                    <input type="hidden" name="language" value="${usLanguage}">
+                                    <input type="hidden" name="priceId" value="${recommendation.priceId}">
+                                    <input type="hidden" name="productId" value="${recommendation.id}">
+                                    <input type="hidden" name="amount" value="1">
+                                    <button type="submit" class="btn btn-cart add-to-cart-button">
+                                        <span>${usCallToAction}</span>
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="p-total"><strong class="price-final">${recommendation.price}</strong><span class="unit-value">/ ${recommendation.unit}</span></td>
+                        </tr>`;
+                    upsellTable.insertAdjacentHTML('beforeend', usResultItem);
+                }
             }
         });
+
+        lastRenderedProductIds = [...usProductIds];
     }
 }
 
