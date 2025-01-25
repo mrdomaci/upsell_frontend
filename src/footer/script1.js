@@ -55,8 +55,8 @@ function getImageCdn() {
     }
 }
 
-function initializeScript() {
-    getResults();
+async function initializeScript() {
+    await getResults();
     setInterval(getResults, 2000);
 }
 
@@ -79,6 +79,7 @@ async function getResults() {
     setMainDiv();
     const us_cart_items = getCartItemsGUIDS();
     if (arraysAreEqual(us_cart_items, us_cart_items_gids)) {
+        printResults();
         return;
     }
     if (us_in_progress) {
