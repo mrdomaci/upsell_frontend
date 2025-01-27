@@ -199,7 +199,7 @@ function printResults() {
         let usHeader = sessionStorage.getItem('us_header');
 
         if (!document.querySelector('#upsell-container h4')) {
-            const headerElement = document.createElement('h4');
+            const headerElement = document.createElement('h4', {'style': 'display: block !important;'});
             headerElement.textContent = usHeader;
             upsellContainer.appendChild(headerElement);
         }
