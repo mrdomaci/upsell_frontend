@@ -98,6 +98,7 @@ async function getResults() {
 
 function setMainDiv() {
     const us_main_div = document.querySelectorAll('#upsell-container');
+    us_main_div.style.order = '2';
     if (us_main_div.length == 0) {
         const us_cart = document.querySelectorAll('.cart-table');
         if (us_cart.length > 0) {
