@@ -64,6 +64,9 @@ function isCart() {
     if (getShoptetDataLayer('pageType') == 'cart') {
         return true;
     }
+    if (document.querySelectorAll('.cart-window-visible').length > 0) {
+        return true;
+    }
     return false;
 }
 
