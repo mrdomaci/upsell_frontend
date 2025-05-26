@@ -240,7 +240,7 @@ function printResults() {
                     let usResultItem = `
                         <tr class="removeable" data-micro="cartItem" data-source="easy-upsell" data-micro-identifier="${recommendation.guid}" data-micro-sku="${recommendation.code}" data-testid="productItem_${recommendation.guid}">
                             <td class="cart-p-image"><a href="${recommendation.url}"><img src="${usImageCdn}${recommendation.image_url}" alt="${recommendation.name}"></a></td>
-                            <td class="p-name"><a href="${recommendation.url}" class="main-link">${recommendation.name}</a><p>${recommendation.description}</p></td>
+                            <td class="p-name"><a href="${recommendation.url}" class="main-link">${recommendation.name}</a><p style='font-weight:normal;'>${recommendation.description}</p></td>
                             <td class="p-availability"><strong class="availability-label">${recommendation.availability}</strong></td>
                             <td class="p-quantity">
                                 <form action="/action/Cart/addCartItem/" method="post" class="pr-action csrf-enabled">
